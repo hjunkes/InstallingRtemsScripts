@@ -2,7 +2,7 @@
 
 #RTEMS development
 export RTEMS_VERSION=6
-export RTEMS_ARCH=powerpc-rtems${RTEMS_VERSION}
+export RTEMS_ARCH=arm-rtems${RTEMS_VERSION}
 export RTEMS_ROOT=/home/rtems/ARM_WORK/rtems/${RTEMS_VERSION}
 
 #install rsb and rtems powerpc tools
