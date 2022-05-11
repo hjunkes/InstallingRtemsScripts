@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#RTEMS environment 
+export RTEMS_VERSION=6
+export RTEMS_ARCH=arm-rtems${RTEMS_VERSION}
+export RTEMS_ROOT=/home/rtems/ARM_WORK/rtems/${RTEMS_VERSION}
+
+export PATH=${RTEMS_ROOT}/bin:${PATH}
+
+#install epics-base 
+git clone https://github.com/epics-base/epics-base.git 
+
+cd epics-base
+ 
+sed -i \
+-e "/FHI/a RTEMS_BASE =  ${RTEMS_ROOT}" \
+-e "/FHI/a RTEMS_VERSION =  ${RTEMS_VERSION}" \
+configure/os/CONFIG_SITE.Common.RTEMS
+
+sed -i \
+-e "s/CROSS_COMPILER_TARGET_ARCHS=/CROSS_COMPILER_TARGET_ARCHS=RTEMS-xilinx_zynq_a9_qemu/g" \
+configure/CONFIG_SITE
+
+#some more changes, because of various problems that still need to be solved.
+#
+#EPICS INCLUDES in front of compile arguments, due to symbol mismatch link/DBLINK
+patch -p1 < ../CONFIG_COMMON.patch
+# ?
+patch -p1 < ../CONFIG.Common.RTEMS.patch
+# ?
+patch -p1 < ../CONFIG.Common.RTEMS-xilinx_zynq_a9_qemu.patch
+# ?
+patch -p1 < ../rtems_init.c.patch
+# ?
+patch -p1 < ../setBootConfigFromNVRAM.c.patch
+
+#make distclean
+make -j15
+make install
+
+#test with qemu
+#  here is still missing the setup of a virtual network switch/bridge
+${RTEMS_ROOT}/bin/qemu-system-arm -no-reboot -nographic -serial null -serial mon:stdio -net nic -M xilinx-zynq-a9 -m 256M -kernel bin/RTEMS-xilinx_zynq_a9_qemu/recordTestHarness
+

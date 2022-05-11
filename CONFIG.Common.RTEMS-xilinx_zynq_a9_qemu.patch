@@ -1,0 +1,23 @@
+diff --git a/configure/os/CONFIG.Common.RTEMS-xilinx_zynq_a9_qemu b/configure/os/CONFIG.Common.RTEMS-xilinx_zynq_a9_qemu
+index 83b518b69..061704848 100644
+--- a/configure/os/CONFIG.Common.RTEMS-xilinx_zynq_a9_qemu
++++ b/configure/os/CONFIG.Common.RTEMS-xilinx_zynq_a9_qemu
+@@ -10,11 +10,16 @@ RTEMS_TARGET_CPU = arm
+ GNU_TARGET = arm-rtems
+ 
+ #use dhcp/bootp
+-ARCH_DEP_CFLAGS += -DMY_DO_BOOTP=NULL
++#ARCH_DEP_CFLAGS += -DMY_DO_BOOTP=NULL
+ 
+-OP_SYS_LDLIBS += -Wl,--gc-sections
++OP_SYS_LDLIBS += -qrtems -Wl,--gc-sections
+ ARCH_DEP_LDFLAGS = -L$(RTEMS_BASE)/$(GNU_TARGET)$(RTEMS_VERSION)/xilinx_zynq_a9_qemu/lib/
+ 
+ 
+ include $(CONFIG)/os/CONFIG.Common.RTEMS
+ 
++ifeq ($(RTEMS_VERSION),6)
++# Which nfs version to use
++ARCH_DEP_CFLAGS += -DNET_CFG_NFS_MOUNT_OPTIONS=\"nfsv4,minorversion=1\"
++endif
++

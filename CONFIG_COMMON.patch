@@ -1,0 +1,20 @@
+diff --git a/configure/CONFIG_COMMON b/configure/CONFIG_COMMON
+index 78abdb1b8..d3a6990df 100644
+--- a/configure/CONFIG_COMMON
++++ b/configure/CONFIG_COMMON
+@@ -342,12 +342,12 @@ LEXOPT += -I
+ #--------------------------------------------------
+ # Build compile line here
+ 
+-COMPILE.c   = $(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDES)
+-COMPILE.cpp = $(CCC) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES)
++COMPILE.c   = $(CC) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
++COMPILE.cpp = $(CCC) $(INCLUDES) $(CPPFLAGS) $(CXXFLAGS)
+ 
+ #--------------------------------------------------
+ # C preprocessor command
+-PREPROCESS.cpp = $(CPP) $(CPPFLAGS) $(INCLUDES) $< > $@
++PREPROCESS.cpp = $(CPP) $(INCLUDES) $(CPPFLAGS) $< > $@
+ 
+ #--------------------------------------------------
+ # genVersion header defaults
