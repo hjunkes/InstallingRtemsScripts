@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#RTEMS development
+export RTEMS_VERSION=6
+export RTEMS_ARCH=powerpc-rtems${RTEMS_VERSION}
+export RTEMS_ROOT=/home/rtems/ARM_WORK/rtems/${RTEMS_VERSION}
+
+#install rsb and rtems powerpc tools
+git clone https://github.com/RTEMS/rtems-source-builder.git rsb
+
+cd rsb
+cd rtems
+../source-builder/sb-set-builder --jobs=4 --prefix=${RTEMS_ROOT} ${RTEMS_VERSION}/rtems-arm
+../source-builder/sb-set-builder --jobs=4 --prefix=${RTEMS_ROOT} devel/qemu 
+
+export PATH=${RTEMS_ROOT}/bin:${PATH}
+
+cd ../..
+# building kernel
+git clone git://git.rtems.org/rtems.git kernel
+cd kernel
+./waf bsp_defaults --rtems-bsps=arm/xilinx_zynq_a9_qemu > config.ini
+sed -i \
+-e "s|RTEMS_POSIX_API = False|RTEMS_POSIX_API = True|" \
+-e "s|BUILD_TESTS = False|BUILD_TESTS = True|" \
+config.ini
+
+./waf configure --prefix=${RTEMS_ROOT}
+./waf
+./waf install
+
+cd ..
+# Add freebsd network
+git clone https://github.com/RTEMS/rtems-libbsd.git
+cd rtems-libbsd/
+git checkout 6-freebsd-12
+#git checkout -b if_mve de0badf2c3aea5328936e583c842f58e80e56d62
+git submodule init
+git submodule update rtems_waf
+
+./waf configure --prefix=${RTEMS_ROOT} --rtems-bsps=arm/xilinx_zynq_a9_qemu --buildset=buildset/default.ini
+./waf
+./waf install
+cd ..
+#test with qemu
+
+${RTEMS_ROOT}/bin/qemu-system-arm -no-reboot -nographic -serial null -serial mon:stdio -net none -M xilinx-zynq-a9 -m 256M -kernel ./kernel/build/arm/xilinx_zynq_a9_qemu/testsuites/samples/ticker.exe
