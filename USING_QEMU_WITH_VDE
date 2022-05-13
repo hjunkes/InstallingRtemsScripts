@@ -1,0 +1,68 @@
+#
+# sudo apt install vde2
+# sudo apt install uml-utilities
+# sudo apt install libpixman-1-dev
+#
+#  ---- as root 
+# user "rtems" is the user who wants to use qemu and the virtual switch
+# tunctl -u rtems -t tap0
+# ifconfig tap0 10.1.2.3 netmask 255.0.0.0 
+# 
+# ---- systemd job? 
+# /etc/systemd/system/vde_tap.service
+#[Service]
+#Type=oneshot
+# RemainAfterExit=yes
+#ExecStart=/usr/local/libexec/init_vde_tap
+#
+#[Install]
+#WantedBy=multi-user.target
+# ----
+# /usr/local/libexec/init_vde_tap:
+# #!/usr/bin/bsh
+# tunctl -u rtems -t tap0
+# ifconfig tap0 10.1.2.3 netmask 255.0.0.0
+#
+# make file executable; systemctl enable vde_tap.service
+#
+# ifconfig -a should show the tap0 interface:
+# tap0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+#       inet 10.1.2.3  netmask 255.0.0.0  broadcast 10.255.255.255
+#       ether 66:24:81:ba:26:86  txqueuelen 1000  (Ethernet)
+#       RX packets 0  bytes 0 (0.0 B)
+#       RX errors 0  dropped 0  overruns 0  frame 0
+#       TX packets 0  bytes 0 (0.0 B)
+#       TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+#
+# as user rtems
+vde_switch -d -s /tmp/vde.ctl -t tap0 -M /tmp/mgmt
+slirpvde -d -s /tmp/vde.ctl -dhcp
+#showstopper????
+# IPv4 only. IPv6 is still unsupported (will be supported when slirpvde will be rewritten using the LWIPv6 network stack).
+
+#to check
+#rtems@rtems-dev:~$ vdeterm /tmp/mgmt
+#VDE switch V.2.3.3
+#(C) Virtual Square Team (coord. R. Davoli) 2005,2006,2007 - GPLv2
+#
+#vde[/tmp/mgmt]: port/allprint
+#
+#Port 0001 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+# Current User: NONE Access Control: (User: NONE - Group: NONE)
+#  -- endpoint ID 0007 module tuntap      : tap0
+#Port 0002 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+# Current User: rtems Access Control: (User: NONE - Group: NONE)
+#  -- endpoint ID 0008 module unix prog   : QEMU user=rtems PID=824 SSH=141.14.128.70
+#Port 0003 untagged_vlan=0000 ACTIVE - Unnamed Allocatable
+# Current User: rtems Access Control: (User: NONE - Group: NONE)
+#  -- endpoint ID 0010 module unix prog   : slirpvde: user=rtems PID=851 SSH=141.14.128.70
+#Success
+#
+#
+#RTEMS development
+export RTEMS_VERSION=6
+export RTEMS_ARCH=powerpc-rtems${RTEMS_VERSION}
+export RTEMS_ROOT=/home/rtems/ARM_WORK/rtems/${RTEMS_VERSION}
+
+${RTEMS_ROOT}/bin/qemu-system-arm -no-reboot -nographic -serial null -serial mon:stdio -net nic -net vde,sock=/tmp/vde.ctl -M xilinx-zynq-a9 -m 256M -kernel bin/RTEMS-xilinx_zynq_a9_qemu/recordTestHarness
+
